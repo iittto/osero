@@ -1,4 +1,4 @@
-//package reversi2;
+package reversi2;
 
 import java.util.Scanner;
 public class Master{
@@ -11,14 +11,20 @@ public class Master{
 	private static final int	WHITE = 2;
 	
 	private static final int	CENTER = 4;
-		
+	private static int[] Playre = new int[3];
+	private static int page;		//ページの状態　ゲーム中:0 中断確認:1 結果画面:2
+	
+	
 	public Master(){
 	}
 	
 	//初期化
 	static void init(){
+		Playre[1] = 0;
+		Playre[2] = 0;
 		Board_Data.init();
 		turnflag = BLACK;
+		page = 0;
 	}
 
 	static int Get_Turn(){
@@ -30,21 +36,29 @@ public class Master{
 	}
 	
 	//画面からマス番号を受け取って処理
-	static void Send_Press(int x,int y){
-		if(x == -1 && y == -1){
+	static void Send_Press(int x,int y,int turn){
+		if(x == -1 && y == -1 && page == 0){
 			ReTake();
 		}else{
 			if(Board_Data.Get(x,y) == 0){
-				if(turnflag == BLACK){
-//					if(Board_Data.Put_Check)
-//					Board_Data.Set(x,y,BLACK);
-					if(Board_Data.Put(CENTER,x,y) == 1)	turnflag = WHITE;
-				}else{
-//					Board_Data.Set(x,y,WHITE);
-					if(Board_Data.Put(CENTER,x,y) == 1)	turnflag = BLACK;
-				}
+				//if( Playre[turnflag] == turn ){	//0:USER 1~10:CP
+					if(turnflag == BLACK){
+						if(Board_Data.Put(CENTER,x,y) == 1)	turnflag = WHITE;
+					}else{
+						if(Board_Data.Put(CENTER,x,y) == 1)	turnflag = BLACK;
+					}
+				//}
 			}
 			pass();
+		}
+	}
+	
+	static int Pose(){
+		if(Playre[turnflag] == 0 && page == 0){
+			return 0;
+		}else{
+			if(page > 0)	return page;
+			else			return -1;
 		}
 	}
 	
@@ -54,7 +68,7 @@ public class Master{
 			else						turnflag = BLACK;
 			
 			if(Board_Data.Check() == 0){
-				finish();
+				page = 2;
 			}
 		}
 	}

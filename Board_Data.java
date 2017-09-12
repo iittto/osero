@@ -1,4 +1,4 @@
-//package reversi2;
+package reversi2;
 import java.util.Deque;
 import java.util.Queue;
 import java.util.Scanner;
