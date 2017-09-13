@@ -8,6 +8,7 @@ public class Board_Data {
 
 	//範囲外アクセスを防ぐために外枠をつくっておく　実際のオセロ盤面はboard[1][1]〜board[8][8]
 	static public int[][] board = new int[masusize+2][masusize+2];
+	public static int board_eval[][] = new int[masusize+2][masusize+2];//評価関数
 	
 	private static final int	TRANS = 0;
 	private static final int	BLACK = 1;
@@ -54,10 +55,32 @@ x		[3] [4] [5]
 			}
 		}
    	
-		board[masusize/2][masusize/2] = BLACK;
-		board[masusize/2+1][masusize/2] = WHITE;
-		board[masusize/2][masusize/2+1] = WHITE;
-		board[masusize/2+1][masusize/2+1] = BLACK;
+		board[masusize/2][masusize/2] = WHITE;
+		board[masusize/2+1][masusize/2] = BLACK;
+		board[masusize/2][masusize/2+1] = BLACK;
+		board[masusize/2+1][masusize/2+1] = WHITE;
+	}
+	
+	//評価値
+	static void eval_init(){
+		
+		for(int i = 0;i < masusize; i++){
+			for(int j = 0;j < masusize; j++){
+				if((i == 0 || i == 7) && (j == 0 || j == 7))
+					board_eval[i][j] = 30;
+				else if((i == 1 || i == 6) && (j == 1 || j == 6))
+					board_eval[i][j] = -15;
+				else if((i == 0 || i == 1 || i == 6 || i == 7) && (j == 0 || j == 1 || j == 6 || j == 7) && i != j)
+					board_eval[i][j] = -12;
+				else if((i == 1 || i == 6) && (j >= 2 && j <= 5))
+					board_eval[i][j] = -3;
+				else if((j == 1 || j == 6) && (i >= 2 && i <= 5))
+					board_eval[i][j] = -3;
+				else if((j == 3 || j == 4) || (i == 3 || i == 4))
+					board_eval[i][j] = -1;
+			}
+		}//盤面評価値初期化
+
 	}
 	
 	static int recolor(int color){
@@ -66,21 +89,22 @@ x		[3] [4] [5]
 	}
 
 
-	static int Put_Check(int vector,int x, int y){
+	//置く場所があるかの確認用
+	static int Pass_Check(int vector,int x, int y){
 		int P1 = Master.Get_Turn();
 		int P2 = recolor(P1);
 		
 		if(vector == CENTER){
-				for(int i=0; i<7; i++){
+				for(int i=0; i<9; i++){
 					if(board[x+dir[i][0]][y+dir[i][1]] == P2){
-						if(Put_Check(i,x+dir[i][0],y+dir[i][1]) == 1)	return 1;
+						if(Pass_Check(i,x+dir[i][0],y+dir[i][1]) == 1)	return 1;
 					}
 				}
 		}else{
 				x += dir[vector][0];
 				y += dir[vector][1];
 				if(board[x][y] == P2){
-					if(Put_Check(vector,x,y) == 1)	return 1;
+					if(Pass_Check(vector,x,y) == 1)	return 1;
 				}else if(board[x][y] == P1){
 					return 1;
 				}
@@ -88,13 +112,78 @@ x		[3] [4] [5]
 		return 0;
 	}
 
-	static int Check(){
-		int P1 = Master.Get_Turn();
-		int P2 = recolor(P1);
+	//配列返すよう
+	static int Put_Check(int turn,int [][]node,int vector,int x,int y){
+		int P1 = turn;
+		int P2 = (turn == BLACK) ? WHITE:BLACK;
 		
+		int OK = 0;
+		if(vector == CENTER){
+			for(int i=0; i<9; i++){
+				if(i!=4 && node[x+dir[i][0]][y+dir[i][1]] == P2){
+					if(Put_Check(turn,node,i,x+dir[i][0],y+dir[i][1]) == 1){
+						//board[x][y] = P1;
+						//board[x+dir[i][0]][y+dir[i][1]] = P1;
+						OK = 1;
+						//							return 1;
+					}
+				}
+			}
+		}else{
+			x += dir[vector][0];
+			y += dir[vector][1];
+			if(node[x][y] == P2){
+				if(Put_Check(turn,node,vector,x,y) == 1){
+					//board[x][y] = P1;
+					return 1;
+				}
+			}else if(node[x][y] == P1){
+				return 1;
+			}
+		}
+		return OK;
+
+
+	}
+
+	static int Virtual_put(int turn,int [][]node,int vector,int x, int y){
+		int P1 = turn;
+		int P2 = (turn == BLACK)?WHITE:BLACK;
+		int OK = 0;
+
+		if(vector == CENTER){
+			for(int i=0; i<9; i++){
+				if(i!=4 && node[x+dir[i][0]][y+dir[i][1]] == P2){
+					if(Virtual_put(turn,node,i,x+dir[i][0],y+dir[i][1]) == 1){
+						node[x][y] = P1;
+						node[x+dir[i][0]][y+dir[i][1]] = P1;
+						OK = 1;
+						//							return 1;
+					}
+				}
+			}
+		}else{
+			x += dir[vector][0];
+			y += dir[vector][1];
+			if(node[x][y] == P2){
+				if(Virtual_put(turn,node,vector,x,y) == 1){
+					node[x][y] = P1;
+					return 1;
+				}
+			}else if(node[x][y] == P1){
+				return 1;
+			}
+		}
+		return OK;
+	}
+	
+	
+	
+	//まだ置く場所があるかどうか
+	static int Check(){		
 		for(int i=0; i<masusize; i++){
 			for(int j=0; j<masusize; j++){
-				if(board[i+1][j+1] == TRANS && Put_Check(CENTER,i+1,j+1) == 1) return 1;
+				if(board[i+1][j+1] == TRANS && Pass_Check(CENTER,i+1,j+1) == 1) return 1;
 			}
 		}
 		return 0;
@@ -168,7 +257,7 @@ x		[3] [4] [5]
 		int num = 0;
 		
 		if(PHistP == 0 && RHistP == 0){
-			return 0;
+			return 1;
 		}else{
 			PHistP--;
 			int delnum = PutHist[PHistP][2];
@@ -180,14 +269,17 @@ x		[3] [4] [5]
 				}
 			}		
 		*/
-		
+		if(PutHist[PHistP][0] == -1 && PutHist[PHistP][1] == -1){
+			return 2;
+		}
+			
 		for(int i=0; i<delnum; i++){
 			if(RHistP > 0) RHistP--;
 			
 			x = ReverceHist[RHistP][0];
 			y =	ReverceHist[RHistP][1];
 			if(board[x][y] == BLACK)	board[x][y] = WHITE;
-			else											board[x][y] = BLACK;
+			else						board[x][y] = BLACK;
 
 		}
 
@@ -195,10 +287,16 @@ x		[3] [4] [5]
 		y = PutHist[PHistP][1];
 		board[x][y] = TRANS;
 
-		return 1;
+		return 0;
 		}
 	}
 	
+	static void pass(){
+		PutHist[PHistP][0] = -1;
+		PutHist[PHistP][1] = -1;
+		PutHist[PHistP][2] = 0;
+		PHistP++;
+	}
 /*
 	static void Set(int x, int y,int color){
 		board[x][y] = color;
@@ -245,4 +343,31 @@ x		[3] [4] [5]
             print(LINE);
         }
 */
+	static int win(){
+		int white = 0;
+		int black = 0;
+		for(int i=0; i<masusize; i++){
+			for(int j=0; j<masusize; j++){
+				if(board[i+1][j+1] == 1)black++;
+				if(board[i+1][j+1] == 2)white++;
+			}
+		}
+		
+		if(black > white){
+			return BLACK;
+		}else{
+			return WHITE;
+		}
+	}
+	
+	//----履歴追加------------------------//
+	//history受け渡し関数
+	static int[][] GetHistoryData(){
+		return PutHist;
+	}
+	//履歴数受け渡し関数
+	static int GetTimeData(){
+		return PHistP;
+	}
+	//----------------------------------//
 }

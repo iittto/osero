@@ -3,25 +3,29 @@ package reversi2;
 import java.util.Scanner;
 public class Master{
 	
-	static public int turnflag;
-	static private int masusize = 8;
+	static public int turnflag;			//黒、白どちらのターンかを保持
+	static private int masusize = 8;	//マスの数　8*8
 	
+	//石の種類
 	private static final int	TRANS = 0;
 	private static final int	BLACK = 1;
 	private static final int	WHITE = 2;
 	
-	private static final int	CENTER = 4;
-	private static int[] Playre = new int[3];
-	private static int page;		//ページの状態　ゲーム中:0 中断確認:1 結果画面:2
-	
+	private static int page;		//ページの状態　ゲーム中:0 中断確認:1 結果画面:2 再戦選択:3
+
+	private static final int	CENTER = 4;		//探索を行う際の真ん中を示す値
+	static Player[] Player = new Player[2];
+//	private static int[] Player = new int[2];	//プレイヤー
+	private static int winner;					//プレイヤー配列番号と紐つけ　勝ったほう
+	//実際用いるときはturnflagが1､2なのでPlayer[turnflag-1]
 	
 	public Master(){
 	}
 	
 	//初期化
 	static void init(){
-		Playre[1] = 0;
-		Playre[2] = 0;
+		Player[0] = new Player(3);
+		Player[1] = new Player(4);
 		Board_Data.init();
 		turnflag = BLACK;
 		page = 0;
@@ -35,41 +39,83 @@ public class Master{
 		Board_Data.Get(viewboard);
 	}
 	
+	static void CPturn(){
+		if(Player[turnflag-1].Get_Level() != 0){
+			Player[turnflag-1].Minimax(Board_Data.board,turnflag,0);
+			Send_Press(Player[turnflag-1].p,Player[turnflag-1].t,Player[turnflag-1].Get_Level());
+		}
+	}
+	
 	//画面からマス番号を受け取って処理
-	static void Send_Press(int x,int y,int turn){
-		if(x == -1 && y == -1 && page == 0){
-			ReTake();
-		}else{
-			if(Board_Data.Get(x,y) == 0){
-				//if( Playre[turnflag] == turn ){	//0:USER 1~10:CP
+	//(x,y) = (正の数,正の数)はマス番号、(-1,1or2）は下のボタン
+	static void Send_Press(int x,int y,int flom){
+		if(page == 0){
+			if(x == -1){
+				if(y == 1)		ReTake();
+				if(y == 2)		page = 1;
+			}else{
+				if(Player[turnflag-1].Get_Level() == flom && Board_Data.Get(x,y) == 0){
 					if(turnflag == BLACK){
 						if(Board_Data.Put(CENTER,x,y) == 1)	turnflag = WHITE;
 					}else{
 						if(Board_Data.Put(CENTER,x,y) == 1)	turnflag = BLACK;
 					}
-				//}
+				}
+				pass();
 			}
-			pass();
+		}else if(page == 1){
+			if(x == -1){
+				if(y == 1)		page = 0;	//ゲームに戻る
+				if(y == 2)		finish();	//ゲーム終了
+			}
+		}else	if(page == 2){
+			if(x == -1){
+				if(y == 1){				//レベル選択へ
+					if(Player[0] != Player[1] && (Player[0].Get_Level() == 0 || Player[1].Get_Level() == 0)){
+							page = 3;
+					}else	finish();
+				}
+				if(y == 2)		finish();	//ゲーム終了
+			}
+		}else if(page == 3){
+			if(x == -1){
+				if(y == 2)		finish();	//同じレベル init(今のレベル)
+				if(y == 1){				//次/前のレベル
+					//ここにレベル設定を変更する
+					//init(次のレベル);
+					page = 0;
+					//finish();
+				}
+			}
 		}
 	}
 	
-	static int Pose(){
-		if(Playre[turnflag] == 0 && page == 0){
-			return 0;
-		}else{
-			if(page > 0)	return page;
-			else			return -1;
-		}
+	static int Get_Page(){
+		return page;
 	}
 	
 	static void pass(){
 		if(Board_Data.Check() == 0){
+			Board_Data.pass();
 			if(turnflag == BLACK)	turnflag = WHITE;
 			else						turnflag = BLACK;
 			
 			if(Board_Data.Check() == 0){
 				page = 2;
+				winner = Board_Data.win();
 			}
+		}
+	}
+	
+	static int Get_CPlv(int color){
+		return Player[color-1].Get_Level();
+	}
+	
+	static int Get_Winner(){
+		if(page < 1){
+			return -1;
+		}else{
+			return Player[winner-1].Get_Level();
 		}
 	}
 	
@@ -78,11 +124,32 @@ public class Master{
 	}
 	
 	static void ReTake(){
+		int check;
 		for(int i=0; i<2; i++){
-			if(1==Board_Data.HistDelete()){
+			check = Board_Data.HistDelete();
+			if(check > 0){
 				if(turnflag == BLACK)	turnflag = WHITE;
-				else									turnflag = BLACK;
+				else						turnflag = BLACK;
+				if(check == 2){	//手番がパスだった場合
+					if(i == 1){			//戻った1個めがパス(相手がパス)のときはそのまま次のパスへ
+						i = -1;			//2個がパス(相手を1回戻した次の自ターンがパス)ならそこからさらに2手戻る
+					}
+				}
 			}
 		}
 	}
+	
+	//履歴取得
+	static int[][] Get_History(){
+		int[][] temp = new int[100][2]; //保持用
+		temp = Board_Data.GetHistoryData();
+		return temp;
+	}
+	//指し回数取得
+	static int Get_Time(){
+		int temp2 = 0; //保持用
+		temp2 = Board_Data.GetTimeData();
+		return temp2;
+	}
+	
 }
