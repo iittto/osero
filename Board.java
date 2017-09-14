@@ -43,7 +43,7 @@ public class Board extends JPanel implements MouseListener {
 	
 	
   public Board() {
-	  Master.init();
+	  Master.init(0,1);
 	  addMouseListener(this);
   }
 
@@ -136,9 +136,13 @@ public class Board extends JPanel implements MouseListener {
 		  }else if(page == 3){
 			  g.drawString(" 同じレベル ", x+masu, (int)(y+masu*2.6));
 			  if(Master.Get_Winner() == 0){
-				  g.drawString(" 次のレベル ", x+masu*4, (int)(y+masu*2.6));
+				  if(player1+player2 < 5){
+					  g.drawString(" 次のレベル ", x+masu*4, (int)(y+masu*2.6));
+				   }
 			  }else{
-				  g.drawString(" 前のレベル ", x+masu*4, (int)(y+masu*2.6));
+				  if(player1+player2 > 1){
+					  g.drawString(" 前のレベル ", x+masu*4, (int)(y+masu*2.6));
+				  }
 			  }
 		  }
 		  g.setColor(new Color(0,0,0));
@@ -190,29 +194,28 @@ public class Board extends JPanel implements MouseListener {
 	  g.setColor(new Color(255,255,255));
 	  
 	  if(page == 0){
-	  /*プレイヤークラスのオブジェクトからint型で情報をもらえる関数player1.PCorUser(仮)をつくる
-	  if(player1 == 0 && player2 == 0){
-	  	g.drawString("   P1 vs P2   ", x+masu/2, y+masu);
-	  }else if(player1 == 0 && player2 > 0){
-	  	g.drawString("P1 vs CP", x+masu/2, y+masu);
-	  	g.setFont(font1);
-	  	g.drawString("(Lv." + player2 + ")", (int)(x+masu*5.4), y+masu);
-	  }else if(player1 > 0 && player2 == 0){
-	  	g.drawString("CP       vs P2", x+masu/2+2, y+masu);
-	  	g.setFont(font1);
-	  	g.drawString("(Lv." + player1 + ")", x+masu*2, y+masu);
-	  }else if(player1 > 0 && player2 > 0){
-	  	g.drawString("CP     vsCP", x+masu/2-18, y+masu);
-	  	g.setFont(font1);
-	  	g.drawString("Lv." + player1, x+masu*2-23, y+masu+7);
-	  	g.drawString("Lv." + player2, x+masu*6, y+masu+7);
-	  }
-	  */
-		  	g.drawString("CP     vs CP", x+masu/2-18, y+masu);
+	  //プレイヤークラスのオブジェクトからint型で情報をもらえる関数player1.PCorUser(仮)をつくる
+		  if(player1 == 0 && player2 == 0){
+			  g.drawString("   P1 vs P2   ", x+masu/2, y+masu);
+		  }else if(player1 == 0 && player2 > 0){
+			  g.drawString("P1 vs CP", x+masu/2, y+masu);
+			  g.setFont(font1);
+			  g.drawString("(Lv." + player2 + ")", (int)(x+masu*5.4), y+masu);
+		  }else if(player1 > 0 && player2 == 0){
+			  g.drawString("CP       vs P2", x+masu/2+2, y+masu);
+			  g.setFont(font1);
+			  g.drawString("(Lv." + player1 + ")", x+masu*2, y+masu);
+		  }else if(player1 > 0 && player2 > 0){
+			  g.drawString("CP     vsCP", x+masu/2-18, y+masu);
+			  g.setFont(font1);
+			  g.drawString("Lv." + player1, x+masu*2-23, y+masu+7);
+			  g.drawString("Lv." + player2, x+masu*6, y+masu+7);
+		  }
+/*		  	g.drawString("CP     vs CP", x+masu/2-18, y+masu);
 		  	g.setFont(font1);
 		  	g.drawString("Lv." + 5, x+masu*2-23, y+masu+7);
 		  	g.drawString("Lv." + 5, x+masu*6+15, y+masu+7);
-	  
+*/	  
 	  }else if(page == 2){
 		  if(white < black){
 			  g.drawString("黒の勝利", x+masu/2, y+masu);
@@ -288,7 +291,7 @@ public class Board extends JPanel implements MouseListener {
 			}
 		}
 		//---------------------------------------------------------//
-		Master.CPturn();
+			Master.CPturn();
   }
 
   public void mouseClicked(MouseEvent e) { }

@@ -6,6 +6,8 @@ public class Master{
 	static public int turnflag;			//黒、白どちらのターンかを保持
 	static private int masusize = 8;	//マスの数　8*8
 	
+	private static int CPtime = 1000;
+	
 	//石の種類
 	private static final int	TRANS = 0;
 	private static final int	BLACK = 1;
@@ -23,9 +25,9 @@ public class Master{
 	}
 	
 	//初期化
-	static void init(){
-		Player[0] = new Player(3);
-		Player[1] = new Player(4);
+	static void init(int p1,int p2){
+		Player[0] = new Player(p1,BLACK);
+		Player[1] = new Player(p2,WHITE);
 		Board_Data.init();
 		turnflag = BLACK;
 		page = 0;
@@ -42,6 +44,7 @@ public class Master{
 	static void CPturn(){
 		if(Player[turnflag-1].Get_Level() != 0){
 			Player[turnflag-1].Minimax(Board_Data.board,turnflag,0);
+			System.out.println(turnflag+":"+Player[turnflag-1].p+","+Player[turnflag-1].t);
 			Send_Press(Player[turnflag-1].p,Player[turnflag-1].t,Player[turnflag-1].Get_Level());
 		}
 	}
@@ -57,7 +60,7 @@ public class Master{
 				if(Player[turnflag-1].Get_Level() == flom && Board_Data.Get(x,y) == 0){
 					if(turnflag == BLACK){
 						if(Board_Data.Put(CENTER,x,y) == 1)	turnflag = WHITE;
-					}else{
+					}else if(turnflag == WHITE){
 						if(Board_Data.Put(CENTER,x,y) == 1)	turnflag = BLACK;
 					}
 				}
@@ -79,12 +82,16 @@ public class Master{
 			}
 		}else if(page == 3){
 			if(x == -1){
-				if(y == 2)		finish();	//同じレベル init(今のレベル)
+				if(y == 2){
+					finish();//同じレベル init(今のレベル)
+				}
 				if(y == 1){				//次/前のレベル
 					//ここにレベル設定を変更する
-					//init(次のレベル);
-					page = 0;
-					//finish();
+					if(Player[winner-1].Get_Level() == 0 && Player[0].Get_Level()+Player[1].Get_Level()<5){
+						init(0,Player[0].Get_Level()+Player[1].Get_Level()+1);
+					}else if(Player[winner-1].Get_Level() != 0 && Player[0].Get_Level()+Player[1].Get_Level()>1){
+						init(0,Player[0].Get_Level()+Player[1].Get_Level()-1);
+					}
 				}
 			}
 		}
@@ -120,21 +127,22 @@ public class Master{
 	}
 	
 	static void finish(){
-		init();
+		init(Player[0].Get_Level(),Player[1].Get_Level());
 	}
 	
 	static void ReTake(){
 		int check;
 		for(int i=0; i<2; i++){
 			check = Board_Data.HistDelete();
-			if(check > 0){
+			if(check == 1){
+			}else if(check == 2){		//手番がパスだった場合
+				if(i == 1)	i = -1;		//戻った1個めがパス(相手がパス)のときはそのまま次のパスへ
+				//2個がパス(相手を1回戻した次の自ターンがパス)ならそこからさらに2手戻る
 				if(turnflag == BLACK)	turnflag = WHITE;
 				else						turnflag = BLACK;
-				if(check == 2){	//手番がパスだった場合
-					if(i == 1){			//戻った1個めがパス(相手がパス)のときはそのまま次のパスへ
-						i = -1;			//2個がパス(相手を1回戻した次の自ターンがパス)ならそこからさらに2手戻る
-					}
-				}
+			}else{
+				if(turnflag == BLACK)	turnflag = WHITE;
+				else						turnflag = BLACK;
 			}
 		}
 	}

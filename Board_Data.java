@@ -38,7 +38,7 @@ x		[3] [4] [5]
 	static private int PHistP;	//ポインタの代わり
 	static private int RHistP;	
 	
-	public Board_Data(){   	
+	public Board_Data(){
 	}
 	
 	//boardの初期化
@@ -47,7 +47,7 @@ x		[3] [4] [5]
 		RHistP = 0;
 		PutHist[0][2] = -1;
 		
-	
+		
 		for(int i=0; i<masusize+2; i++){
 			for(int j=0; j<masusize+2; j++){
 				if(i==0 || j==0)	board[i][j] = -1;				//置けない場所（ボードの外枠）
@@ -62,8 +62,7 @@ x		[3] [4] [5]
 	}
 	
 	//評価値
-	static void eval_init(){
-		
+/*	static void eval_init(){
 		for(int i = 0;i < masusize; i++){
 			for(int j = 0;j < masusize; j++){
 				if((i == 0 || i == 7) && (j == 0 || j == 7))
@@ -82,7 +81,7 @@ x		[3] [4] [5]
 		}//盤面評価値初期化
 
 	}
-	
+*/	
 	static int recolor(int color){
 		if(color == BLACK)	return WHITE;
 		else					return BLACK;
@@ -267,7 +266,7 @@ x		[3] [4] [5]
 				for(int j=0; j<=PutHist[i][2];j++){
 					java.lang.System.out.println(ReverceHist[j][0]+ " " + ReverceHist[j][1]);
 				}
-			}		
+			}
 		*/
 		if(PutHist[PHistP][0] == -1 && PutHist[PHistP][1] == -1){
 			return 2;
